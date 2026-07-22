@@ -1,0 +1,136 @@
+{% extends 'base.html.twig' %}
+{% block title %}Liste des étudiants{% endblock %}
+{% block body %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="fw-bold mb-0"><i class="bi bi-people-fill"></i> Étudiants
+        <span class="badge bg-secondary-subtle text-secondary fs-6">{{ pagination.getTotalItemCount }}</span>
+    </h3>
+    <div>
+        <a href="{{ path('etudiant_export_csv', app.request.query.all) }}" class="btn btn-outline-success">
+            <i class="bi bi-file-earmark-spreadsheet"></i> Exporter CSV
+        </a>
+        <a href="{{ path('etudiant_new') }}" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill"></i> Nouvel étudiant
+        </a>
+    </div>
+</div>
+
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small text-muted mb-1">Recherche</label>
+            <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Nom, prénom, matricule, email...">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted mb-1">Filière</label>
+            <select name="filiere" class="form-select">
+                <option value="">Toutes</option>
+                {% for f in filieres %}
+                    <option value="{{ f }}" {{ f == filiereActive ? 'selected' }}>{{ f }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small text-muted mb-1">Niveau</label>
+            <select name="niveau" class="form-select">
+                <option value="">Tous</option>
+                {% for n in niveaux %}
+                    <option value="{{ n }}" {{ n == niveauActif ? 'selected' }}>{{ n }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small text-muted mb-1">Statut</label>
+            <select name="statut" class="form-select">
+                <option value="">Tous</option>
+                <option value="actif" {{ statutActif == 'actif' ? 'selected' }}>Actif</option>
+                <option value="inactif" {{ statutActif == 'inactif' ? 'selected' }}>Inactif</option>
+            </select>
+        </div>
+        <div class="col-md-1">
+            <button class="btn btn-primary w-100" type="submit"><i class="bi bi-search"></i></button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+            <tr>
+                <th></th>
+                <th>{{ knp_pagination_sortable(pagination, 'Nom', 'e.nom') }}</th>
+                <th>Matricule</th>
+                <th>Email</th>
+                <th>{{ knp_pagination_sortable(pagination, 'Filière', 'e.filiere') }}</th>
+                <th>{{ knp_pagination_sortable(pagination, 'Niveau', 'e.niveau') }}</th>
+                <th>{{ knp_pagination_sortable(pagination, 'Moyenne', 'e.moyenneGenerale') }}</th>
+                <th>Statut</th>
+                <th class="text-end">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for etudiant in pagination %}
+                <tr>
+                    <td>
+                        {% if etudiant.photo %}
+                            <img src="{{ asset('uploads/photos/' ~ etudiant.photo) }}" class="avatar-circle">
+                        {% else %}
+                            <div class="avatar-circle">{{ etudiant.prenom|first }}{{ etudiant.nom|first }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ path('etudiant_show', {id: etudiant.id}) }}" class="fw-semibold text-decoration-none">
+                            {{ etudiant.nomComplet }}
+                        </a>
+                    </td>
+                    <td><code>{{ etudiant.matricule }}</code></td>
+                    <td class="text-muted small">{{ etudiant.email }}</td>
+                    <td>{{ etudiant.filiere }}</td>
+                    <td><span class="badge bg-primary-subtle text-primary badge-niveau">{{ etudiant.niveau }}</span></td>
+                    <td>{{ etudiant.moyenneGenerale ?? '—' }}</td>
+                    <td>
+                        {% if etudiant.actif %}
+                            <span class="badge bg-success-subtle text-success">Actif</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary">Inactif</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ path('etudiant_show', {id: etudiant.id}) }}" class="btn btn-sm btn-light" title="Voir"><i class="bi bi-eye"></i></a>
+                        <a href="{{ path('etudiant_edit', {id: etudiant.id}) }}" class="btn btn-sm btn-light" title="Modifier"><i class="bi bi-pencil"></i></a>
+                        <button type="button" class="btn btn-sm btn-light text-danger" title="Supprimer"
+                                data-bs-toggle="modal" data-bs-target="#deleteModal{{ etudiant.id }}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+
+                        <div class="modal fade" id="deleteModal{{ etudiant.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-body p-4">
+                                        <p class="mb-0">Confirmer la suppression de <strong>{{ etudiant.nomComplet }}</strong> ? Cette action est irréversible.</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                                        <form method="post" action="{{ path('etudiant_delete', {id: etudiant.id}) }}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ etudiant.id) }}">
+                                            <button class="btn btn-danger" type="submit">Supprimer définitivement</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="9" class="text-center text-muted py-5">Aucun étudiant ne correspond à ces critères.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="p-3">
+        {{ knp_pagination_render(pagination) }}
+    </div>
+</div>
+{% endblock %}

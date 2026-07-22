@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gestion des Étudiants{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22><text y=%2214%22 font-size=%2214%22>🎓</text></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand: #2563eb;
+            --brand-dark: #1e3a8a;
+            --accent: #7c3aed;
+            --accent-2: #f59e0b;
+            --accent-3: #16a34a;
+            --ink: #101828;
+            --radius: 1rem;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: #f3f5fb;
+            font-family: 'Manrope', 'Outfit', system-ui, sans-serif;
+            color: var(--ink);
+            position: relative;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5, h6, .navbar-brand, .fw-bold { font-family: 'Outfit', sans-serif; }
+
+        /* --- Couches du fond cinématique --- */
+        .aurora { position: fixed; inset: 0; z-index: -3; overflow: hidden; animation: hueShift 30s linear infinite; }
+        .aurora span {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(70px);
+            opacity: .4;
+            mix-blend-mode: multiply;
+            animation: floatBlob 16s ease-in-out infinite;
+        }
+        .aurora span:nth-child(1) { width: 480px; height: 480px; background: var(--brand); top: -10%; left: -8%; animation-duration: 18s; }
+        .aurora span:nth-child(2) { width: 420px; height: 420px; background: var(--accent); top: 10%; right: -10%; animation-duration: 22s; animation-delay: -4s; }
+        .aurora span:nth-child(3) { width: 380px; height: 380px; background: var(--accent-2); bottom: -12%; left: 20%; animation-duration: 20s; animation-delay: -8s; }
+        .aurora span:nth-child(4) { width: 320px; height: 320px; background: var(--accent-3); bottom: 5%; right: 15%; animation-duration: 24s; animation-delay: -12s; }
+
+        @keyframes floatBlob {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33%      { transform: translate(50px, -35px) scale(1.15); }
+            66%      { transform: translate(-35px, 30px) scale(.92); }
+        }
+        @keyframes hueShift {
+            0%   { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(25deg); }
+        }
+
+        #bgCanvas {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .vignette {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 55%, rgba(10, 14, 30, .10) 100%);
+        }
+
+        .grain {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            opacity: .035;
+            mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+        }
+
+        /* --- Navbar --- */
+        .navbar-brand { font-weight: 800; letter-spacing: .3px; font-size: 1.2rem; }
+        .navbar-brand .logo-emoji { display: inline-block; animation: logoFloat 3s ease-in-out infinite; }
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50%      { transform: translateY(-3px) rotate(-6deg); }
+        }
+
+        .bg-brand {
+            background: linear-gradient(120deg, var(--brand-dark), var(--brand) 55%, var(--accent));
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(255,255,255,.12);
+        }
+
+        .navbar .nav-link {
+            position: relative;
+            font-weight: 500;
+            padding-bottom: .35rem !important;
+        }
+        .navbar .nav-link::after {
+            content: "";
+            position: absolute;
+            left: 0; bottom: 0;
+            width: 100%; height: 2px;
+            background: #fff;
+            border-radius: 2px;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform .25s ease;
+        }
+        .navbar .nav-link:hover::after,
+        .navbar .nav-link.active::after { transform: scaleX(1); }
+
+        /* --- Cartes --- */
+        .card {
+            border: 1px solid rgba(20, 30, 60, .06);
+            box-shadow: 0 4px 20px rgba(20, 30, 60, .07);
+            border-radius: var(--radius);
+            background: rgba(255, 255, 255, .82);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease;
+        }
+        .card:hover {
+            transform: translateY(-8px) scale(1.015);
+            box-shadow: 0 20px 40px rgba(20, 30, 60, .18);
+        }
+
+        .stat-card {
+            border-radius: var(--radius);
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+        }
+        .stat-card .stat-icon {
+            position: absolute;
+            right: -.5rem;
+            bottom: -.75rem;
+            font-size: 4.5rem;
+            opacity: .18;
+            transform: rotate(-8deg);
+        }
+        .stat-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, rgba(255,255,255,.25), transparent 60%);
+            opacity: 0;
+            transition: opacity .3s ease;
+        }
+        .stat-card:hover::after { opacity: 1; }
+        .stat-card::before {
+            content: "";
+            position: absolute;
+            top: 0; left: -60%;
+            width: 45%; height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(255,255,255,.65), transparent);
+            transform: skewX(-20deg);
+            animation: shimmerSweep 1.3s ease forwards;
+            animation-delay: .6s;
+        }
+        @keyframes shimmerSweep {
+            0%   { left: -60%; opacity: 0; }
+            15%  { opacity: 1; }
+            100% { left: 130%; opacity: 0; }
+        }
+
+        .table thead th { border-bottom-width: 1px; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: #6b7280; }
+        .avatar-circle {
+            width: 42px; height: 42px; border-radius: 50%; object-fit: cover;
+            background: linear-gradient(135deg, var(--brand), var(--accent));
+            color: #fff; display:flex; align-items:center; justify-content:center; font-weight:700;
+        }
+        .badge-niveau { font-size: .75rem; }
+        .sort-link { color: inherit; text-decoration: none; }
+        .sort-link:hover { color: var(--brand); }
+        footer { color: #9aa4b2; font-size: .85rem; }
+
+        .btn-primary {
+            background: linear-gradient(120deg, var(--brand), var(--accent));
+            border: none;
+            transition: filter .2s ease, transform .2s ease;
+        }
+        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(var(--brand), var(--accent)); border-radius: 10px; }
+
+        .fade-in-up {
+            opacity: 0;
+            animation: fadeInUp .8s cubic-bezier(.34,1.56,.64,1) forwards;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(45px) scale(.94); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .delay-1 { animation-delay: .08s; }
+        .delay-2 { animation-delay: .18s; }
+        .delay-3 { animation-delay: .28s; }
+        .delay-4 { animation-delay: .38s; }
+        .delay-5 { animation-delay: .5s; }
+        .delay-6 { animation-delay: .62s; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .aurora, .aurora span, .fade-in-up, .stat-card::before, .navbar-brand .logo-emoji {
+                animation: none !important;
+            }
+            .fade-in-up { opacity: 1; transform: none; }
+        }
+
+        {% block stylesheets %}{% endblock %}
+    </style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div class="aurora"><span></span><span></span><span></span><span></span></div>
+<div class="vignette"></div>
+<div class="grain"></div>
+
+{% if app.user %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-brand shadow-sm mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="{{ path('app_dashboard') }}"><span class="logo-emoji">🎓</span> Gestion Étudiants</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navMenu">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link {{ app.request.attributes.get('_route') == 'app_dashboard' ? 'active fw-semibold' }}" href="{{ path('app_dashboard') }}">
+                        <i class="bi bi-speedometer2"></i> Tableau de bord
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ app.request.attributes.get('_route') starts with 'etudiant_' ? 'active fw-semibold' }}" href="{{ path('etudiant_index') }}">
+                        <i class="bi bi-people-fill"></i> Étudiants
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ path('etudiant_new') }}">
+                        <i class="bi bi-person-plus-fill"></i> Ajouter
+                    </a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle"></i> {{ app.user.nomComplet ?? app.user.userIdentifier }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{{ path('app_logout') }}"><i class="bi bi-box-arrow-right"></i> Déconnexion</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+{% endif %}
+
+<main class="container pb-5">
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label }} alert-dismissible fade show shadow-sm" role="alert">
+                {% if label == 'success' %}<i class="bi bi-check-circle-fill me-1"></i>{% endif %}
+                {% if label == 'danger' %}<i class="bi bi-exclamation-triangle-fill me-1"></i>{% endif %}
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    {% block body %}{% endblock %}
+</main>
+
+<footer class="text-center py-4">
+    Application de Gestion des Étudiants &mdash; {{ "now"|date("Y") }}
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Fond animé : réseau de particules connectées
+(function () {
+    const canvas = document.getElementById('bgCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let w, h, particles, mouse = { x: null, y: null };
+
+    function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const COLORS = ['37,99,235', '124,58,237', '245,158,11', '22,163,74'];
+    const COUNT = Math.min(80, Math.floor((w * h) / 16000));
+
+    particles = Array.from({ length: COUNT }, () => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: (Math.random() - .5) * .3,
+        vy: (Math.random() - .5) * .3,
+        r: Math.random() * 1.8 + 1,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)]
+    }));
+
+    window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+    function step() {
+        ctx.clearRect(0, 0, w, h);
+
+        particles.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.x < 0 || p.x > w) p.vx *= -1;
+            if (p.y < 0 || p.y > h) p.vy *= -1;
+
+            if (mouse.x !== null) {
+                const dx = p.x - mouse.x, dy = p.y - mouse.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 120) {
+                    p.x += dx / dist * 0.6;
+                    p.y += dy / dist * 0.6;
+                }
+            }
+        });
+
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const a = particles[i], b = particles[j];
+                const dx = a.x - b.x, dy = a.y - b.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 140) {
+                    ctx.strokeStyle = `rgba(${a.color},${(1 - dist / 140) * 0.2})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(a.x, a.y);
+                    ctx.lineTo(b.x, b.y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        particles.forEach(p => {
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(${p.color}, .6)`;
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        if (!reduceMotion) requestAnimationFrame(step);
+    }
+
+    step();
+})();
+</script>
+{% block javascripts %}{% endblock %}
+</body>
+</html>

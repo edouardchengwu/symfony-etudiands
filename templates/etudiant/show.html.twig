@@ -1,0 +1,68 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ etudiant.nomComplet }}{% endblock %}
+{% block body %}
+<div class="d-flex align-items-center gap-2 mb-3">
+    <a href="{{ path('etudiant_index') }}" class="btn btn-sm btn-light"><i class="bi bi-arrow-left"></i></a>
+    <h3 class="fw-bold mb-0">Fiche étudiant</h3>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card p-4 text-center">
+            {% if etudiant.photo %}
+                <img src="{{ asset('uploads/photos/' ~ etudiant.photo) }}" class="rounded-circle mx-auto mb-3" style="width:120px;height:120px;object-fit:cover;">
+            {% else %}
+                <div class="avatar-circle mx-auto mb-3" style="width:120px;height:120px;font-size:2.2rem;">{{ etudiant.prenom|first }}{{ etudiant.nom|first }}</div>
+            {% endif %}
+            <h5 class="fw-bold mb-0">{{ etudiant.nomComplet }}</h5>
+            <div class="text-muted small mb-2"><code>{{ etudiant.matricule }}</code></div>
+            {% if etudiant.actif %}
+                <span class="badge bg-success-subtle text-success">Actif</span>
+            {% else %}
+                <span class="badge bg-secondary-subtle text-secondary">Inactif</span>
+            {% endif %}
+            <hr>
+            <div class="d-grid gap-2">
+                <a href="{{ path('etudiant_edit', {id: etudiant.id}) }}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i> Modifier</a>
+                <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"><i class="bi bi-trash"></i> Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card p-4">
+            <h6 class="fw-bold mb-3">Informations</h6>
+            <dl class="row mb-0">
+                <dt class="col-sm-4 text-muted fw-normal">Email</dt><dd class="col-sm-8">{{ etudiant.email }}</dd>
+                <dt class="col-sm-4 text-muted fw-normal">Téléphone</dt><dd class="col-sm-8">{{ etudiant.telephone ?? '—' }}</dd>
+                <dt class="col-sm-4 text-muted fw-normal">Date de naissance</dt><dd class="col-sm-8">{{ etudiant.dateNaissance ? etudiant.dateNaissance|date('d/m/Y') ~ ' (' ~ etudiant.age ~ ' ans)' : '—' }}</dd>
+                <dt class="col-sm-4 text-muted fw-normal">Adresse</dt><dd class="col-sm-8">{{ etudiant.adresse ?? '—' }}</dd>
+                <dt class="col-sm-4 text-muted fw-normal">Filière</dt><dd class="col-sm-8">{{ etudiant.filiere }}</dd>
+                <dt class="col-sm-4 text-muted fw-normal">Niveau</dt><dd class="col-sm-8"><span class="badge bg-primary-subtle text-primary">{{ etudiant.niveau }}</span></dd>
+                <dt class="col-sm-4 text-muted fw-normal">Moyenne générale</dt><dd class="col-sm-8">{{ etudiant.moyenneGenerale ?? '—' }} / 20</dd>
+                <dt class="col-sm-4 text-muted fw-normal">Inscrit le</dt><dd class="col-sm-8">{{ etudiant.createdAt|date('d/m/Y à H:i') }}</dd>
+                {% if etudiant.updatedAt %}
+                <dt class="col-sm-4 text-muted fw-normal">Dernière modification</dt><dd class="col-sm-8">{{ etudiant.updatedAt|date('d/m/Y à H:i') }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body p-4">
+                <p class="mb-0">Confirmer la suppression de <strong>{{ etudiant.nomComplet }}</strong> ? Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                <form method="post" action="{{ path('etudiant_delete', {id: etudiant.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ etudiant.id) }}">
+                    <button class="btn btn-danger" type="submit">Supprimer définitivement</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
