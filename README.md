@@ -1,7 +1,7 @@
 # symfony-etudiands
-Nom : CHENG WU
-Premon :  Meddy Edouard Alexio
-Classe : L1A_S2_INSI
+# Nom : CHENG WU
+# Prenom :  Meddy Edouard Alexio
+# Classe : L1A_S2_INSI
 ---
 ## Partie II : Travaux pratiques
 
