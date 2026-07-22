@@ -1,8 +1,8 @@
 # symfony-etudiands
-Voici un texte structuré et prêt à copier-coller pour ta partie II :
-
+Nom : CHENG WU
+Premon :  Meddy Edouard Alexio
+Classe : L1A_S2_INSI
 ---
-
 ## Partie II : Travaux pratiques
 
 ### Sujet choisi
